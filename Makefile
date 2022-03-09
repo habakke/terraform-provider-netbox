@@ -1,7 +1,7 @@
 default: build
 
 build:
-	go build -o terraform-provider-netbox-$(shell go env GOOS)-$(shell go env GOARCH)
+	go build -o terraform-provider-netbox_v1.0.0
 
 testacc:
 	TF_ACC=1 go test

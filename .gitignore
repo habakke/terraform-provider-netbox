@@ -1,1 +1,3 @@
-terraform-provider-netbox-*
+terraform-provider-netbox_v*
+**/.DS_store
+.idea
