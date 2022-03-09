@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"net/http"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/go-resty/resty/v2"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"net/http"
 )
 
 func resourcePrefix() *schema.Resource {
@@ -24,7 +24,7 @@ func resourcePrefix() *schema.Resource {
 }
 
 type Prefix struct {
-	Id int `json:"id"`
+	Id     int    `json:"id"`
 	Prefix string `json:"prefix"`
 }
 
@@ -54,7 +54,7 @@ func resourcePrefixRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 	if resp.StatusCode() != http.StatusOK {
-		return fmt.Errorf("GET: Unexpected HTTP status: %s", resp.Status())
+		return fmt.Errorf("GET: Unexpected HTTP status: %s (%s)", resp.Status(), fmt.Sprintf("/ipam/ip-addresses/%s/", d.Id()))
 	}
 	prefix := resp.Result().(*Prefix)
 	d.Set("prefix", prefix.Prefix)
@@ -65,12 +65,12 @@ func resourcePrefixUpdate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*resty.Client)
 	resp, err := client.R().
 		SetBody(Prefix{Prefix: d.Get("prefix").(string)}).
-                Put(fmt.Sprintf("/ipam/prefixes/%s/", d.Id()))
+		Put(fmt.Sprintf("/ipam/prefixes/%s/", d.Id()))
 	if err != nil {
 		return err
 	}
 	if resp.StatusCode() != http.StatusOK {
-		return fmt.Errorf("PUT: Unexpected HTTP status: %s", resp.Status())
+		return fmt.Errorf("PUT: Unexpected HTTP status: %s (%s)", resp.Status(), fmt.Sprintf("/ipam/ip-addresses/%s/", d.Id()))
 	}
 	return resourcePrefixRead(d, m)
 }
@@ -78,12 +78,12 @@ func resourcePrefixUpdate(d *schema.ResourceData, m interface{}) error {
 func resourcePrefixDelete(d *schema.ResourceData, m interface{}) error {
 	client := m.(*resty.Client)
 	resp, err := client.R().
-                Delete(fmt.Sprintf("/ipam/prefixes/%s/", d.Id()))
+		Delete(fmt.Sprintf("/ipam/prefixes/%s/", d.Id()))
 	if err != nil {
 		return err
 	}
 	if resp.StatusCode() != http.StatusNoContent {
-		return fmt.Errorf("DELETE: Unexpected HTTP status: %s", resp.Status())
+		return fmt.Errorf("DELETE: Unexpected HTTP status: %s (%s)", resp.Status(), fmt.Sprintf("/ipam/prefixes/%s/", d.Id()))
 	}
 	return nil
 }

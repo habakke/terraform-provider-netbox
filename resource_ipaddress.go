@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
+	"github.com/go-resty/resty/v2"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"net/http"
 	"strings"
 	"sync"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/go-resty/resty/v2"
 )
 
 var resourceIPAddressCreateAvailableMutex = &sync.Mutex{}
@@ -24,16 +24,16 @@ func resourceIPAddress() *schema.Resource {
 				Optional: true,
 			},
 			"address_cidr": &schema.Schema{
-				Type: schema.TypeString,
+				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
 			},
 			"address": &schema.Schema{
-				Type: schema.TypeString,
+				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"dns_name":  &schema.Schema{
-				Type: schema.TypeString,
+			"dns_name": &schema.Schema{
+				Type:     schema.TypeString,
 				Optional: true,
 			},
 		},
@@ -41,7 +41,7 @@ func resourceIPAddress() *schema.Resource {
 }
 
 type IPAddress struct {
-	Id int `json:"id"`
+	Id      int    `json:"id"`
 	Address string `json:"address"`
 	DNSName string `json:"dns_name"`
 }
@@ -72,7 +72,7 @@ func resourceIPAddressCreate(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 	if resp.StatusCode() != http.StatusCreated {
-		return fmt.Errorf("POST: Unexpected HTTP status: %s", resp.Status())
+		return fmt.Errorf("POST: Unexpected HTTP status: %s (%s)", resp.Status(), url)
 	}
 	ipaddress := resp.Result().(*IPAddress)
 	d.SetId(fmt.Sprintf("%d", ipaddress.Id))
@@ -88,7 +88,7 @@ func resourceIPAddressRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 	if resp.StatusCode() != http.StatusOK {
-		return fmt.Errorf("GET: Unexpected HTTP status: %s", resp.Status())
+		return fmt.Errorf("GET: Unexpected HTTP status: %s (%s)", resp.Status(), fmt.Sprintf("/ipam/ip-addresses/%s/", d.Id()))
 	}
 	ipaddress := resp.Result().(*IPAddress)
 	d.Set("address_cidr", ipaddress.Address)
@@ -101,12 +101,12 @@ func resourceIPAddressUpdate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*resty.Client)
 	resp, err := client.R().
 		SetBody(IPAddress{Address: d.Get("address_cidr").(string), DNSName: d.Get("dns_name").(string)}).
-                Put(fmt.Sprintf("/ipam/ip-addresses/%s/", d.Id()))
+		Put(fmt.Sprintf("/ipam/ip-addresses/%s/", d.Id()))
 	if err != nil {
 		return err
 	}
 	if resp.StatusCode() != http.StatusOK {
-		return fmt.Errorf("PUT: Unexpected HTTP status: %s", resp.Status())
+		return fmt.Errorf("PUT: Unexpected HTTP status: %s (%s)", resp.Status(), fmt.Sprintf("/ipam/ip-addresses/%s/", d.Id()))
 	}
 	return resourceIPAddressRead(d, m)
 }
@@ -114,12 +114,12 @@ func resourceIPAddressUpdate(d *schema.ResourceData, m interface{}) error {
 func resourceIPAddressDelete(d *schema.ResourceData, m interface{}) error {
 	client := m.(*resty.Client)
 	resp, err := client.R().
-                Delete(fmt.Sprintf("/ipam/ip-addresses/%s/", d.Id()))
+		Delete(fmt.Sprintf("/ipam/ip-addresses/%s/", d.Id()))
 	if err != nil {
 		return err
 	}
 	if resp.StatusCode() != http.StatusNoContent {
-		return fmt.Errorf("DELETE: Unexpected HTTP status: %s", resp.Status())
+		return fmt.Errorf("DELETE: Unexpected HTTP status: %s (%s)", resp.Status(), fmt.Sprintf("/ipam/prefixes/%s/", d.Id()))
 	}
 	return nil
 }
